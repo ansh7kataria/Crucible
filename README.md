@@ -4,7 +4,7 @@ A tribunal for the decision you keep dodging.
 
 Most "AI advisor" tools just argue with you and leave you exactly where you started. Crucible closes the loop: it interrogates your reasoning, then **forces a commitment** — one choice, one deadline, one first action — and seals it as a ruling you keep.
 
-**Live:** _add your URL here after deploying_
+**Live:** https://crucible-duyobgopj-ansh7katarias-projects.vercel.app/
 
 ---
 
