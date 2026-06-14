@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Crucible — a tribunal for decisions you keep dodging</title>
+<meta name="description" content="State a decision you keep dodging. The Crucible interrogates your reasoning, then makes you commit: one choice, one deadline, one first move." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,400;0,600;0,800;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#1c1815;--ink-soft:#4a423b;--paper:#f3efe6;--paper-2:#eae4d6;
+    --slate:#26211d;--slate-2:#322b25;--oxblood:#8b2a1f;--oxblood-deep:#6f2018;
+    --brass:#b08a4f;--line:#d6cdba;--ok:#3f6b4a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--slate);color:var(--ink);font-family:"IBM Plex Sans",system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased;padding:clamp(16px,4vw,48px);display:flex;justify-content:center}
+  .shell{width:100%;max-width:680px}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--brass);margin:0 0 10px}
+  h1{font-family:"Spectral",serif;font-weight:800;font-size:clamp(40px,9vw,68px);line-height:.95;letter-spacing:-.01em;margin:0;color:var(--paper)}
+  .lede{color:#c8bfae;font-size:15px;max-width:46ch;margin:14px 0 0}
+  .rule{height:1px;background:linear-gradient(90deg,var(--brass),transparent);margin:26px 0 22px}
+  .card{background:var(--paper);border:1px solid #00000014;border-radius:2px;box-shadow:0 18px 40px -24px #000000aa;padding:clamp(20px,5vw,34px)}
+  .card + .card{margin-top:18px}
+  .step-tag{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--oxblood);margin:0 0 4px}
+  .step-title{font-family:"Spectral",serif;font-weight:600;font-size:23px;margin:0 0 16px;color:var(--ink)}
+  label{display:block;font-size:13px;font-weight:600;margin:0 0 6px;color:var(--ink-soft)}
+  .hint{font-size:12px;color:#8a7f70;font-weight:400;margin-left:6px}
+  textarea,input[type=text],input[type=date]{width:100%;font-family:inherit;font-size:15px;color:var(--ink);background:#fbf9f4;border:1px solid var(--line);border-radius:2px;padding:11px 13px;outline:none;transition:border-color .15s,box-shadow .15s}
+  textarea{resize:vertical;min-height:84px}
+  textarea:focus,input:focus{border-color:var(--oxblood);box-shadow:0 0 0 3px #8b2a1f22}
+  .field{margin-bottom:18px}
+  .opt-row{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .opt-row input{flex:1}
+  .opt-x{border:1px solid var(--line);background:#fbf9f4;color:#9a8f80;border-radius:2px;width:38px;height:38px;font-size:18px;cursor:pointer;flex:none;line-height:1}
+  .opt-x:hover{color:var(--oxblood);border-color:var(--oxblood)}
+  .add-opt{background:none;border:1px dashed var(--line);color:var(--ink-soft);font-family:inherit;font-size:13px;padding:8px 12px;border-radius:2px;cursor:pointer}
+  .add-opt:hover{border-color:var(--oxblood);color:var(--oxblood)}
+  button.primary{width:100%;margin-top:6px;background:var(--oxblood);color:#f6efe4;border:none;border-radius:2px;font-family:"Spectral",serif;font-weight:600;font-size:18px;letter-spacing:.01em;padding:14px 18px;cursor:pointer;transition:background .15s,transform .05s}
+  button.primary:hover{background:var(--oxblood-deep)}
+  button.primary:active{transform:translateY(1px)}
+  button.primary:disabled{background:#b9a98f;cursor:wait}
+  button.ghost{background:none;border:1px solid var(--line);color:var(--ink-soft);font-family:inherit;font-size:14px;padding:10px 16px;border-radius:2px;cursor:pointer}
+  button.ghost:hover{border-color:var(--ink);color:var(--ink)}
+  .brief-item{padding:16px 0;border-top:1px solid var(--line)}
+  .brief-item:first-child{border-top:none;padding-top:0}
+  .brief-k{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--oxblood);margin:0 0 5px}
+  .brief-v{font-size:15.5px;color:var(--ink);margin:0}
+  .brief-v.q{font-family:"Spectral",serif;font-style:italic;font-size:18px;line-height:1.4}
+  .choice{display:flex;align-items:flex-start;gap:11px;border:1px solid var(--line);border-radius:2px;padding:13px 14px;margin-bottom:9px;cursor:pointer;background:#fbf9f4;transition:border-color .12s,background .12s}
+  .choice:hover{border-color:#b9ad97}
+  .choice.sel{border-color:var(--oxblood);background:#fbf2ee;box-shadow:0 0 0 1px var(--oxblood) inset}
+  .choice input{margin-top:3px;accent-color:var(--oxblood)}
+  .choice span{font-size:15px}
+  .ruling{position:relative;background:#fbf9f4;border:1px solid var(--line);border-radius:2px;padding:26px 24px;overflow:hidden}
+  .ruling::before{content:"";position:absolute;inset:0;border:1px solid var(--brass);margin:7px;border-radius:1px;pointer-events:none;opacity:.5}
+  .ruling-eyebrow{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass);margin:0 0 14px}
+  .ruling-decision{font-family:"Spectral",serif;font-size:13px;color:var(--ink-soft);margin:0 0 4px}
+  .ruling-verdict{font-family:"Spectral",serif;font-weight:800;font-size:27px;line-height:1.15;color:var(--ink);margin:0 0 18px}
+  .ruling-grid{display:grid;grid-template-columns:1fr;gap:12px;font-family:"IBM Plex Mono",monospace;font-size:13px}
+  .ruling-grid div span{display:block;color:#9a8f80;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:2px}
+  .seal{position:absolute;top:18px;right:18px;width:84px;height:84px;border-radius:50%;border:3px solid var(--oxblood);color:var(--oxblood);display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:"Spectral",serif;font-weight:800;transform:rotate(-13deg);opacity:0}
+  .seal.stamp{animation:stamp .45s cubic-bezier(.2,1.4,.4,1) forwards}
+  .seal .s-big{font-size:15px;letter-spacing:.04em;line-height:1}
+  .seal .s-small{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:8px;letter-spacing:.1em;margin-top:3px}
+  @keyframes stamp{0%{opacity:0;transform:rotate(-13deg) scale(2.4)}70%{opacity:1}100%{opacity:.92;transform:rotate(-13deg) scale(1)}}
+  .ledger{margin-top:18px}
+  .ledger h3{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--brass);margin:0 0 10px}
+  .ledger-row{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid #ffffff14;font-size:13.5px;color:#cabfae}
+  .ledger-row b{color:var(--paper);font-weight:600;font-family:"Spectral",serif}
+  .ledger-row em{font-family:"IBM Plex Mono",monospace;font-style:normal;color:#9a8f7e;font-size:12px;white-space:nowrap}
+  .err{background:#fbeae7;border:1px solid #e3b3aa;color:var(--oxblood-deep);font-size:13.5px;padding:11px 13px;border-radius:2px;margin-top:14px}
+  .hidden{display:none}
+  .spin{display:inline-block;width:14px;height:14px;border:2px solid #ffffff66;border-top-color:#fff;border-radius:50%;animation:r .6s linear infinite;vertical-align:-2px;margin-right:8px}
+  @keyframes r{to{transform:rotate(360deg)}}
+  .foot{color:#7d7264;font-size:11.5px;text-align:center;margin-top:26px;font-family:"IBM Plex Mono",monospace;letter-spacing:.04em}
+  .copied{color:var(--ok);font-size:12px;margin-left:10px;font-family:"IBM Plex Mono",monospace}
+  @media (prefers-reduced-motion:reduce){.seal.stamp{animation:none;opacity:.92;transform:rotate(-13deg)}.spin{animation:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header>
+    <p class="eyebrow">Crucible — No. 001</p>
+    <h1>The Crucible</h1>
+    <p class="lede">A tribunal for the decision you keep dodging. State the matter. It will interrogate your reasoning, then make you commit — one choice, one deadline, one first move. No more circling.</p>
+  </header>
+  <div class="rule"></div>
+
+  <section class="card" id="cardState">
+    <p class="step-tag">Step 1 · The matter</p>
+    <h2 class="step-title">State what you're stuck on</h2>
+    <div class="field">
+      <label for="decision">The decision <span class="hint">in one or two plain sentences</span></label>
+      <textarea id="decision" placeholder="e.g. Should I take the safe analyst role, or hold out for the riskier move abroad?"></textarea>
+    </div>
+    <div class="field">
+      <label>The options on the table <span class="hint">at least two</span></label>
+      <div id="opts">
+        <div class="opt-row"><input type="text" class="opt" placeholder="Option A" /><button class="opt-x" type="button" aria-label="Remove">×</button></div>
+        <div class="opt-row"><input type="text" class="opt" placeholder="Option B" /><button class="opt-x" type="button" aria-label="Remove">×</button></div>
+      </div>
+      <button class="add-opt" type="button" id="addOpt">+ Add an option</button>
+    </div>
+    <div class="field">
+      <label for="lean">Which way are you leaning, and what's at stake? <span class="hint">be honest</span></label>
+      <textarea id="lean" placeholder="e.g. I lean safe because of money pressure, but I'll resent it. Either way I lose ~6 months if I'm wrong."></textarea>
+    </div>
+    <button class="primary" id="submitBtn">Submit to the crucible</button>
+    <div class="err hidden" id="err1"></div>
+  </section>
+
+  <section class="card hidden" id="cardBrief">
+    <p class="step-tag">Step 2 · The interrogation</p>
+    <h2 class="step-title">What the crucible found</h2>
+    <div id="briefBody"></div>
+  </section>
+
+  <section class="card hidden" id="cardCommit">
+    <p class="step-tag">Step 3 · The ruling</p>
+    <h2 class="step-title">Now commit. One choice.</h2>
+    <div class="field">
+      <label>Pick the one you will act on</label>
+      <div id="choices"></div>
+    </div>
+    <div class="field">
+      <label for="deadline">Decide-and-move-by date</label>
+      <input type="date" id="deadline" />
+    </div>
+    <div class="field">
+      <label for="firstAct">The first action — today or tomorrow <span class="hint">small and concrete</span></label>
+      <input type="text" id="firstAct" placeholder="e.g. Email the recruiter to set the call for Thursday." />
+    </div>
+    <button class="primary" id="sealBtn">Seal the ruling</button>
+    <div class="err hidden" id="err3"></div>
+  </section>
+
+  <section class="card hidden" id="cardSealed">
+    <div class="ruling">
+      <div class="seal" id="seal"><span class="s-big">SEALED</span><span class="s-small" id="sealDate"></span></div>
+      <p class="ruling-eyebrow">Ruling of the Crucible</p>
+      <p class="ruling-decision" id="rDecision"></p>
+      <p class="ruling-verdict" id="rVerdict"></p>
+      <div class="ruling-grid">
+        <div><span>Move by</span><span id="rDeadline" style="color:var(--ink);font-size:13px;letter-spacing:0;text-transform:none"></span></div>
+        <div><span>First action</span><span id="rAction" style="color:var(--ink);font-size:13px;letter-spacing:0;text-transform:none"></span></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px;align-items:center">
+      <button class="ghost" id="copyBtn">Copy ruling</button>
+      <button class="ghost" id="againBtn">New matter</button>
+      <span class="copied hidden" id="copied">copied</span>
+    </div>
+  </section>
+
+  <div class="ledger hidden" id="ledger">
+    <h3>Sealed this session</h3>
+    <div id="ledgerRows"></div>
+  </div>
+
+  <p class="foot">Decisions don't get easier with more time. They get sealed.</p>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const log = [];
+
+function wireRow(row){
+  row.querySelector('.opt-x').onclick = () => {
+    if(document.querySelectorAll('.opt-row').length > 2) row.remove();
+  };
+}
+document.querySelectorAll('.opt-row').forEach(wireRow);
+$('#addOpt').onclick = () => {
+  if(document.querySelectorAll('.opt-row').length >= 5) return;
+  const row = document.createElement('div');
+  row.className = 'opt-row';
+  row.innerHTML = '<input type="text" class="opt" placeholder="Option" /><button class="opt-x" type="button" aria-label="Remove">×</button>';
+  $('#opts').appendChild(row);
+  wireRow(row);
+  row.querySelector('input').focus();
+};
+function getOptions(){ return [...document.querySelectorAll('.opt')].map(i=>i.value.trim()).filter(Boolean); }
+function showErr(id,msg){const e=$(id);e.textContent=msg;e.classList.remove('hidden');}
+function hideErr(id){$(id).classList.add('hidden');}
+
+$('#submitBtn').onclick = async () => {
+  hideErr('#err1');
+  const decision = $('#decision').value.trim();
+  const options = getOptions();
+  const lean = $('#lean').value.trim();
+  if(!decision){ showErr('#err1','State the decision first — even roughly.'); return; }
+  if(options.length < 2){ showErr('#err1','Give it at least two real options to weigh.'); return; }
+
+  const btn = $('#submitBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Heating the crucible…';
+  try{
+    const res = await fetch("/api/crucible",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({decision, options, lean})
+    });
+    const data = await res.json();
+    if(!res.ok || data.error) throw new Error(data.error || "bad response");
+    renderBrief(data);
+    renderChoices(options);
+    $('#cardBrief').classList.remove('hidden');
+    $('#cardCommit').classList.remove('hidden');
+    $('#cardBrief').scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    showErr('#err1','The crucible stalled — try once more in a moment.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = 'Submit to the crucible';
+  }
+};
+
+function renderBrief(b){
+  const body = $('#briefBody');
+  body.innerHTML = '';
+  const items = [
+    ['What you\u2019re avoiding', b.avoiding, false],
+    ['The case against your lean', b.counter, false],
+    ['The question you haven\u2019t answered', b.question, true],
+    ['What committing buys you', b.nudge, false]
+  ];
+  for(const [k,v,isQ] of items){
+    if(!v) continue;
+    const el = document.createElement('div');
+    el.className = 'brief-item';
+    el.innerHTML = `<p class="brief-k">${k}</p><p class="brief-v${isQ?' q':''}"></p>`;
+    el.querySelector('.brief-v').textContent = v;
+    body.appendChild(el);
+  }
+}
+
+function renderChoices(options){
+  const wrap = $('#choices');
+  wrap.innerHTML = '';
+  options.forEach((o,i)=>{
+    const lab = document.createElement('label');
+    lab.className = 'choice';
+    lab.innerHTML = `<input type="radio" name="choice" value="${i}"><span></span>`;
+    lab.querySelector('span').textContent = o;
+    lab.querySelector('input').onchange = ()=>{
+      document.querySelectorAll('.choice').forEach(c=>c.classList.remove('sel'));
+      lab.classList.add('sel');
+    };
+    wrap.appendChild(lab);
+  });
+  const d = new Date(); d.setDate(d.getDate()+3);
+  $('#deadline').value = d.toISOString().slice(0,10);
+}
+
+$('#sealBtn').onclick = () => {
+  hideErr('#err3');
+  const picked = document.querySelector('input[name=choice]:checked');
+  const deadline = $('#deadline').value;
+  const act = $('#firstAct').value.trim();
+  if(!picked){ showErr('#err3','Pick one. That is the entire point.'); return; }
+  if(!deadline){ showErr('#err3','Set the date you move by.'); return; }
+  if(!act){ showErr('#err3','Name the first action. Small and concrete.'); return; }
+
+  const verdict = getOptions()[+picked.value];
+  const decision = $('#decision').value.trim();
+  const niceDate = new Date(deadline+'T00:00:00').toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});
+
+  $('#rDecision').textContent = 'On the matter of: ' + decision;
+  $('#rVerdict').textContent = verdict;
+  $('#rDeadline').textContent = niceDate;
+  $('#rAction').textContent = act;
+  $('#sealDate').textContent = new Date().toLocaleDateString(undefined,{day:'2-digit',month:'short'}).toUpperCase();
+
+  $('#cardState').classList.add('hidden');
+  $('#cardBrief').classList.add('hidden');
+  $('#cardCommit').classList.add('hidden');
+  $('#cardSealed').classList.remove('hidden');
+
+  const seal = $('#seal');
+  seal.classList.remove('stamp'); void seal.offsetWidth; seal.classList.add('stamp');
+  $('#cardSealed').scrollIntoView({behavior:'smooth',block:'center'});
+
+  log.unshift({verdict, niceDate});
+  renderLedger();
+};
+
+function renderLedger(){
+  if(!log.length) return;
+  $('#ledger').classList.remove('hidden');
+  $('#ledgerRows').innerHTML = log.map(r=>
+    `<div class="ledger-row"><b>${escapeHtml(r.verdict)}</b><em>by ${r.niceDate}</em></div>`
+  ).join('');
+}
+function escapeHtml(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+$('#copyBtn').onclick = () => {
+  const txt = `RULING OF THE CRUCIBLE
+On: ${$('#rDecision').textContent.replace('On the matter of: ','')}
+Verdict: ${$('#rVerdict').textContent}
+Move by: ${$('#rDeadline').textContent}
+First action: ${$('#rAction').textContent}`;
+  navigator.clipboard.writeText(txt).then(()=>{
+    $('#copied').classList.remove('hidden');
+    setTimeout(()=>$('#copied').classList.add('hidden'),1600);
+  });
+};
+
+$('#againBtn').onclick = () => {
+  $('#decision').value=''; $('#lean').value=''; $('#firstAct').value='';
+  document.querySelectorAll('.opt').forEach(i=>i.value='');
+  document.querySelectorAll('.choice').forEach(c=>c.classList.remove('sel'));
+  $('#cardSealed').classList.add('hidden');
+  $('#cardState').classList.remove('hidden');
+  $('#cardState').scrollIntoView({behavior:'smooth',block:'start'});
+};
+</script>
+</body>
+</html>
